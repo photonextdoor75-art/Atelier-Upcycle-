@@ -1,0 +1,7 @@
+{
+  "name": "Copy of The Upcycle Impact Visualizer",
+  "description": "An application that analyzes uploaded furniture photos, calculates the positive environmental and economic benefits of upcycling, and allows users to edit the image using AI.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

@@ -1,0 +1,225 @@
+import React, { useRef, useState, useCallback } from 'react';
+import { toPng } from 'html-to-image';
+import { AnalysisResult } from '../types';
+import { LeafIcon, PiggyBankIcon, UsersIcon, DownloadIcon, ArrowPathIcon, SparklesIcon, ShareIcon } from './Icons';
+import { editImage } from '../services/geminiService';
+
+interface ResultsPageProps {
+  result: AnalysisResult;
+  originalFile: File;
+  originalImageSrc: string;
+  onReset: () => void;
+}
+
+// Helper to convert data URL to File object for Web Share API
+const dataURLtoFile = (dataurl: string, filename: string): File | null => {
+    const arr = dataurl.split(',');
+    if (arr.length < 2) { return null; }
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    if (!mimeMatch) { return null; }
+    const mime = mimeMatch[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+}
+
+const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalFile, originalImageSrc, onReset }) => {
+  const { impact, furnitureType, furnitureMaterial } = result;
+  const resultCardRef = useRef<HTMLDivElement>(null);
+  const [editPrompt, setEditPrompt] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
+
+  const handleDownload = useCallback(() => {
+    if (resultCardRef.current === null) {
+      return;
+    }
+    toPng(resultCardRef.current, { cacheBust: true, backgroundColor: '#1F2937', pixelRatio: 2 })
+      .then((dataUrl) => {
+        const link = document.createElement('a');
+        link.download = 'upcycle-impact.png';
+        link.href = dataUrl;
+        link.click();
+      })
+      .catch((err) => {
+        console.error('oops, something went wrong!', err);
+      });
+  }, []);
+
+  const handleShare = useCallback(async () => {
+    if (!navigator.share) {
+        alert("Le partage web n'est pas supporté par votre navigateur.");
+        return;
+    }
+    if (resultCardRef.current === null) return;
+
+    setIsSharing(true);
+    try {
+        const dataUrl = await toPng(resultCardRef.current, { cacheBust: true, backgroundColor: '#1F2937', pixelRatio: 2 });
+        const file = dataURLtoFile(dataUrl, 'upcycle-impact.png');
+        
+        if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: 'Mon Impact Upcycle',
+                text: 'Découvrez la valeur cachée de mes meubles grâce à The Upcycle Impact Visualizer ! #Upcycle #DIY #EcoFriendly',
+            });
+        } else {
+            alert("Le partage de fichiers n'est pas supporté. Essayez de télécharger l'image.");
+        }
+    } catch (err) {
+        // We don't show an error if the user cancels the share dialog
+        if (err instanceof Error && err.name !== 'AbortError') {
+             console.error('Erreur lors du partage:', err);
+             alert("Oops, une erreur est survenue lors du partage.");
+        }
+    } finally {
+        setIsSharing(false);
+    }
+  }, []);
+
+  const handleEditImage = async () => {
+    if (!editPrompt.trim()) return;
+    setIsEditing(true);
+    setEditError(null);
+    try {
+        const reader = new FileReader();
+        reader.readAsDataURL(originalFile);
+        reader.onloadend = async () => {
+            const base64Data = (reader.result as string).split(',')[1];
+            const newImage = await editImage(base64Data, originalFile.type, editPrompt);
+            setEditedImageUrl(newImage);
+        };
+    } catch (error) {
+        console.error("Image editing failed:", error);
+        setEditError("La modification de l'image a échoué. Veuillez réessayer.");
+    } finally {
+        setIsEditing(false);
+    }
+  };
+
+  const imageToDisplay = editedImageUrl || originalImageSrc;
+
+  return (
+    <div className="w-full flex flex-col items-center space-y-6">
+      {/* The downloadable card with 4:5 aspect ratio */}
+      <div className="w-full max-w-md">
+        <div ref={resultCardRef} className="w-full bg-gray-800 rounded-2xl shadow-2xl overflow-hidden aspect-[4/5] flex flex-col">
+          {/* Image Part */}
+          <div className="relative w-full flex-grow bg-gray-700">
+             <img src={imageToDisplay} alt="Furniture" className="w-full h-full object-cover" />
+             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 -rotate-12">
+                <div className="border-4 border-red-500 text-red-500 font-black uppercase px-4 py-1 text-4xl md:px-6 md:py-2 md:text-5xl tracking-widest" style={{fontFamily: "'Arial Black', Gadget, sans-serif"}}>
+                    PERDU
+                </div>
+             </div>
+             {/* Watermark Title */}
+             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                <h2 className="text-lg md:text-xl font-bold leading-tight text-center text-white text-shadow-lg">
+                    Votre <span className="text-green-400">{furnitureType} en {furnitureMaterial}</span> a un potentiel incroyable
+                    {result.location && <span className="text-base font-medium text-gray-300 block mt-1">à {result.location}</span>} !
+                </h2>
+             </div>
+             {isEditing && <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div></div>}
+          </div>
+
+          {/* InfoGraphic Part */}
+          <div className="h-2/5 flex-shrink-0 flex flex-col justify-center items-center p-4 text-white space-y-3">
+            {/* Stats */}
+            <div className="flex justify-around items-start text-center w-full">
+              {/* Stat 1: CO2 */}
+              <div className="flex flex-col items-center w-1/3 px-1 space-y-1">
+                <div className="p-2 bg-green-500/20 rounded-full"><LeafIcon /></div>
+                <p className="text-xl md:text-2xl font-bold">{Math.round(impact.co2Saved)} kg</p>
+                <p className="text-xs text-gray-400 leading-tight">CO2 Économisé</p>
+              </div>
+              
+              {/* Stat 2: Community */}
+              <div className="flex flex-col items-center w-1/3 px-1 space-y-1">
+                <div className="p-2 bg-yellow-500/20 rounded-full"><UsersIcon /></div>
+                <p className="text-xl md:text-2xl font-bold">{impact.communityCostAvoided.toFixed(0)} €</p>
+                <p className="text-xs text-gray-400 leading-tight">Coût Évité</p>
+              </div>
+              
+              {/* Stat 3: Value */}
+              <div className="flex flex-col items-center w-1/3 px-1 space-y-1">
+                <div className="p-2 bg-blue-500/20 rounded-full"><PiggyBankIcon /></div>
+                <p className="text-xl md:text-2xl font-bold">{impact.valueCreated.toFixed(0)} €</p>
+                <p className="text-xs text-gray-400 leading-tight">Valeur Créée</p>
+              </div>
+            </div>
+            
+            {/* Divider */}
+            <div className="w-3/4 h-px bg-gray-600"></div>
+
+            {/* Attribution */}
+            <p className="text-xs text-gray-500">Généré par The Upcycle Impact Visualizer</p>
+          </div>
+        </div>
+      </div>
+
+      {/* AI Edit Controls */}
+      <div className="w-full max-w-md space-y-2">
+        <label htmlFor="edit-prompt" className="font-semibold text-gray-300">Modifier avec l'IA :</label>
+        <div className="flex gap-2">
+            <input
+            id="edit-prompt"
+            type="text"
+            value={editPrompt}
+            onChange={(e) => setEditPrompt(e.target.value)}
+            placeholder="Ex: 'Ajouter un filtre rétro'"
+            className="flex-grow bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            disabled={isEditing}
+            />
+            <button
+            onClick={handleEditImage}
+            disabled={isEditing || !editPrompt}
+            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            >
+                <SparklesIcon />
+                <span>Générer</span>
+            </button>
+        </div>
+        {editError && <p className="text-red-400 text-sm mt-1">{editError}</p>}
+      </div>
+      
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+        <button
+          onClick={handleDownload}
+          className="w-full flex-1 px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+        >
+          <DownloadIcon />
+          <span>Télécharger l'image</span>
+        </button>
+        {navigator.share && (
+            <button
+                onClick={handleShare}
+                disabled={isSharing}
+                className="w-full flex-1 px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:bg-gray-500"
+            >
+                <ShareIcon />
+                <span>{isSharing ? 'Partage...' : 'Partager'}</span>
+            </button>
+        )}
+      </div>
+       <div className="w-full max-w-md">
+        <button
+          onClick={onReset}
+          className="w-full px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
+        >
+          <ArrowPathIcon />
+          <span>Analyser un autre meuble</span>
+        </button>
+       </div>
+    </div>
+  );
+};
+
+export default ResultsPage;
