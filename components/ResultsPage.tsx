@@ -25,8 +25,28 @@ const dataURLtoFile = (dataurl: string, filename: string): File | null => {
     return new File([u8arr], filename, { type: mime });
 }
 
+const translations: { [key: string]: string } = {
+  'wooden chair': 'chaise en bois',
+  'wooden table': 'table en bois',
+  'wooden cabinet': 'meuble de rangement en bois',
+  'wooden bookshelf': 'bibliothèque en bois',
+  'metal chair': 'chaise en métal',
+  'metal cabinet': 'meuble de rangement en métal',
+  'plastic chair': 'chaise en plastique',
+  'particle board table': 'table en panneau de particules',
+  'fabric sofa': 'canapé en tissu',
+  'wood': 'bois',
+  'metal': 'métal',
+  'particle board': 'panneau de particules',
+  'plastic': 'plastique',
+  'fabric': 'tissu',
+};
+
+const translate = (term: string): string => translations[term.toLowerCase()] || term;
+
+
 const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalImageSrc, onReset }) => {
-  const { impact, furnitureType, furnitureMaterial } = result;
+  const { impact, furnitureType } = result;
   const resultCardRef = useRef<HTMLDivElement>(null);
   const [isSharing, setIsSharing] = useState(false);
 
@@ -79,6 +99,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalImageSrc, onR
   }, []);
 
   const imageToDisplay = originalImageSrc;
+  const translatedFurnitureDescription = translate(furnitureType);
 
   return (
     <div className="w-full flex flex-col items-center space-y-6">
@@ -96,7 +117,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalImageSrc, onR
              {/* Watermark Title */}
              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
                 <h2 className="text-lg md:text-xl font-bold leading-tight text-center text-white text-shadow-lg">
-                    Votre <span className="text-green-400">{furnitureType} en {furnitureMaterial}</span> a un potentiel incroyable
+                    Votre <span className="text-green-400">{translatedFurnitureDescription}</span> a un potentiel incroyable
                     {result.location && <span className="text-base font-medium text-gray-300 block mt-1">à {result.location}</span>} !
                 </h2>
              </div>

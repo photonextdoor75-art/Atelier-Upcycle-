@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type, Modality } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import { AnalysisResult, ImpactData } from '../types';
 import { furnitureData } from './data';
 
@@ -98,32 +98,4 @@ export async function analyzeFurnitureImage(base64Data: string, location: string
     impact,
     location: location ?? undefined,
   };
-}
-
-export async function editImage(base64Data: string, mimeType: string, prompt: string): Promise<string> {
-    const ai = getAiClient(); // Initialize client just in time
-
-    const imagePart = {
-        inlineData: {
-          data: base64Data,
-          mimeType: mimeType,
-        },
-    };
-    const textPart = { text: prompt };
-
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: { parts: [imagePart, textPart] },
-        config: {
-            responseModalities: [Modality.IMAGE],
-        },
-    });
-
-    for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-            return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        }
-    }
-
-    throw new Error("Aucune image n'a été générée par l'API.");
 }
