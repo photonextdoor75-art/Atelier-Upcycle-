@@ -1,7 +1,7 @@
 import React, { useRef, useState, useCallback } from 'react';
 import { toPng } from 'html-to-image';
 import { AnalysisResult } from '../types';
-import { ArrowPathIcon, DownloadIcon, LeafIcon, PiggyBankIcon, ShareIcon, UsersIcon } from './Icons';
+import { ArrowPathIcon, DownloadIcon, ShareIcon } from './Icons';
 
 interface ResultsPageProps {
   result: AnalysisResult;
@@ -43,6 +43,13 @@ const translations: { [key: string]: string } = {
 };
 
 const translate = (term: string): string => translations[term.toLowerCase()] || term;
+
+const StatItem: React.FC<{ value: string; label: string; colorClass: string; }> = ({ value, label, colorClass }) => (
+    <div className="flex flex-col items-center justify-center w-1/3 px-1 space-y-1 h-full">
+        <p className={`text-xl md:text-2xl font-bold ${colorClass}`}>{value}</p>
+        <p className="text-xs text-gray-400 leading-tight">{label}</p>
+    </div>
+);
 
 
 const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalImageSrc, onReset }) => {
@@ -126,27 +133,10 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalImageSrc, onR
           {/* InfoGraphic Part */}
           <div className="h-2/5 flex-shrink-0 flex flex-col justify-center items-center p-4 text-white space-y-3">
             {/* Stats */}
-            <div className="flex justify-around items-start text-center w-full">
-              {/* Stat 1: CO2 */}
-              <div className="flex flex-col items-center w-1/3 px-1 space-y-1">
-                <LeafIcon />
-                <p className="text-xl md:text-2xl font-bold text-green-400 mt-1">{Math.round(impact.co2Saved)} kg</p>
-                <p className="text-xs text-gray-400 leading-tight">CO2 Économisé</p>
-              </div>
-              
-              {/* Stat 2: Community */}
-              <div className="flex flex-col items-center w-1/3 px-1 space-y-1">
-                <UsersIcon />
-                <p className="text-xl md:text-2xl font-bold text-yellow-400 mt-1">{impact.communityCostAvoided.toFixed(0)} €</p>
-                <p className="text-xs text-gray-400 leading-tight">Coût Évité</p>
-              </div>
-              
-              {/* Stat 3: Value */}
-              <div className="flex flex-col items-center w-1/3 px-1 space-y-1">
-                <PiggyBankIcon />
-                <p className="text-xl md:text-2xl font-bold text-blue-400 mt-1">{impact.valueCreated.toFixed(0)} €</p>
-                <p className="text-xs text-gray-400 leading-tight">Valeur Créée</p>
-              </div>
+            <div className="flex justify-around items-center text-center w-full flex-grow">
+              <StatItem value={`${Math.round(impact.co2Saved)} kg`} label="CO2 Économisé" colorClass="text-green-400" />
+              <StatItem value={`${impact.communityCostAvoided.toFixed(0)} €`} label="Coût Évité" colorClass="text-yellow-400" />
+              <StatItem value={`${impact.valueCreated.toFixed(0)} €`} label="Valeur Créée" colorClass="text-blue-400" />
             </div>
             
             {/* Divider */}
