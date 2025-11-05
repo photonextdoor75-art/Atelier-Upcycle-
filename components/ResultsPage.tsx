@@ -1,11 +1,10 @@
 import React, { useRef, useState, useCallback } from 'react';
 import { toPng } from 'html-to-image';
 import { AnalysisResult } from '../types';
-import { editImage } from '../services/geminiService';
+import { ArrowPathIcon, DownloadIcon, LeafIcon, PiggyBankIcon, ShareIcon, UsersIcon } from './Icons';
 
 interface ResultsPageProps {
   result: AnalysisResult;
-  originalFile: File;
   originalImageSrc: string;
   onReset: () => void;
 }
@@ -26,13 +25,9 @@ const dataURLtoFile = (dataurl: string, filename: string): File | null => {
     return new File([u8arr], filename, { type: mime });
 }
 
-const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalFile, originalImageSrc, onReset }) => {
+const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalImageSrc, onReset }) => {
   const { impact, furnitureType, furnitureMaterial } = result;
   const resultCardRef = useRef<HTMLDivElement>(null);
-  const [editPrompt, setEditPrompt] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null);
-  const [editError, setEditError] = useState<string | null>(null);
   const [isSharing, setIsSharing] = useState(false);
 
   const handleDownload = useCallback(() => {
@@ -83,28 +78,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalFile, origina
     }
   }, []);
 
-  const handleEditImage = async () => {
-    if (!editPrompt.trim()) return;
-    setIsEditing(true);
-    setEditError(null);
-    try {
-        const reader = new FileReader();
-        reader.readAsDataURL(originalFile);
-        reader.onloadend = async () => {
-            const base64Data = (reader.result as string).split(',')[1];
-            const newImage = await editImage(base64Data, originalFile.type, editPrompt);
-            setEditedImageUrl(newImage);
-        };
-    } catch (error) {
-        console.error("Image editing failed:", error);
-        const message = error instanceof Error ? error.message : "La modification de l'image a échoué. Veuillez réessayer.";
-        setEditError(message);
-    } finally {
-        setIsEditing(false);
-    }
-  };
-
-  const imageToDisplay = editedImageUrl || originalImageSrc;
+  const imageToDisplay = originalImageSrc;
 
   return (
     <div className="w-full flex flex-col items-center space-y-6">
@@ -115,8 +89,8 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalFile, origina
           <div className="relative w-full flex-grow bg-gray-700">
              <img src={imageToDisplay} alt="Furniture" className="w-full h-full object-cover" />
              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 -rotate-12">
-                <div className="border-4 border-red-500 text-red-500 font-black uppercase px-4 py-1 text-4xl md:px-6 md:py-2 md:text-5xl tracking-widest" style={{fontFamily: "'Arial Black', Gadget, sans-serif"}}>
-                    PERDU
+                <div className="border-4 border-yellow-400 text-yellow-400 font-black uppercase px-4 py-1 text-4xl md:px-6 md:py-2 md:text-5xl tracking-widest" style={{fontFamily: "'Arial Black', Gadget, sans-serif"}}>
+                    VALORISÉ
                 </div>
              </div>
              {/* Watermark Title */}
@@ -126,7 +100,6 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalFile, origina
                     {result.location && <span className="text-base font-medium text-gray-300 block mt-1">à {result.location}</span>} !
                 </h2>
              </div>
-             {isEditing && <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div></div>}
           </div>
 
           {/* InfoGraphic Part */}
@@ -135,19 +108,22 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalFile, origina
             <div className="flex justify-around items-start text-center w-full">
               {/* Stat 1: CO2 */}
               <div className="flex flex-col items-center w-1/3 px-1 space-y-1">
-                <p className="text-xl md:text-2xl font-bold text-green-400">{Math.round(impact.co2Saved)} kg</p>
+                <LeafIcon />
+                <p className="text-xl md:text-2xl font-bold text-green-400 mt-1">{Math.round(impact.co2Saved)} kg</p>
                 <p className="text-xs text-gray-400 leading-tight">CO2 Économisé</p>
               </div>
               
               {/* Stat 2: Community */}
               <div className="flex flex-col items-center w-1/3 px-1 space-y-1">
-                <p className="text-xl md:text-2xl font-bold text-yellow-400">{impact.communityCostAvoided.toFixed(0)} €</p>
+                <UsersIcon />
+                <p className="text-xl md:text-2xl font-bold text-yellow-400 mt-1">{impact.communityCostAvoided.toFixed(0)} €</p>
                 <p className="text-xs text-gray-400 leading-tight">Coût Évité</p>
               </div>
               
               {/* Stat 3: Value */}
               <div className="flex flex-col items-center w-1/3 px-1 space-y-1">
-                <p className="text-xl md:text-2xl font-bold text-blue-400">{impact.valueCreated.toFixed(0)} €</p>
+                <PiggyBankIcon />
+                <p className="text-xl md:text-2xl font-bold text-blue-400 mt-1">{impact.valueCreated.toFixed(0)} €</p>
                 <p className="text-xs text-gray-400 leading-tight">Valeur Créée</p>
               </div>
             </div>
@@ -160,37 +136,14 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalFile, origina
           </div>
         </div>
       </div>
-
-      {/* AI Edit Controls */}
-      <div className="w-full max-w-md space-y-2">
-        <label htmlFor="edit-prompt" className="font-semibold text-gray-300">Modifier avec l'IA :</label>
-        <div className="flex gap-2">
-            <input
-            id="edit-prompt"
-            type="text"
-            value={editPrompt}
-            onChange={(e) => setEditPrompt(e.target.value)}
-            placeholder="Ex: 'Ajouter un filtre rétro'"
-            className="flex-grow bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            disabled={isEditing}
-            />
-            <button
-            onClick={handleEditImage}
-            disabled={isEditing || !editPrompt}
-            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-            >
-                <span>Générer</span>
-            </button>
-        </div>
-        {editError && <p className="text-red-400 text-sm mt-1">{editError}</p>}
-      </div>
       
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+      <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md mt-6">
         <button
           onClick={handleDownload}
           className="w-full flex-1 px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
         >
+          <DownloadIcon />
           <span>Télécharger l'image</span>
         </button>
         {navigator.share && (
@@ -199,6 +152,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalFile, origina
                 disabled={isSharing}
                 className="w-full flex-1 px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:bg-gray-500"
             >
+                <ShareIcon />
                 <span>{isSharing ? 'Partage...' : 'Partager'}</span>
             </button>
         )}
@@ -208,6 +162,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalFile, origina
           onClick={onReset}
           className="w-full px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
         >
+          <ArrowPathIcon />
           <span>Analyser un autre meuble</span>
         </button>
        </div>

@@ -102,7 +102,6 @@ const App: React.FC = () => {
           return (
             <ResultsPage
               result={analysisResult}
-              originalFile={uploadedFile!}
               originalImageSrc={imageDataUrl}
               onReset={handleReset}
             />
