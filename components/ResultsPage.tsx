@@ -1,7 +1,6 @@
 import React, { useRef, useState, useCallback } from 'react';
 import { toPng } from 'html-to-image';
 import { AnalysisResult } from '../types';
-import { LeafIcon, PiggyBankIcon, UsersIcon, DownloadIcon, ArrowPathIcon, SparklesIcon, ShareIcon } from './Icons';
 import { editImage } from '../services/geminiService';
 
 interface ResultsPageProps {
@@ -98,7 +97,8 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalFile, origina
         };
     } catch (error) {
         console.error("Image editing failed:", error);
-        setEditError("La modification de l'image a échoué. Veuillez réessayer.");
+        const message = error instanceof Error ? error.message : "La modification de l'image a échoué. Veuillez réessayer.";
+        setEditError(message);
     } finally {
         setIsEditing(false);
     }
@@ -135,22 +135,19 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalFile, origina
             <div className="flex justify-around items-start text-center w-full">
               {/* Stat 1: CO2 */}
               <div className="flex flex-col items-center w-1/3 px-1 space-y-1">
-                <div className="p-2 bg-green-500/20 rounded-full"><LeafIcon /></div>
-                <p className="text-xl md:text-2xl font-bold">{Math.round(impact.co2Saved)} kg</p>
+                <p className="text-xl md:text-2xl font-bold text-green-400">{Math.round(impact.co2Saved)} kg</p>
                 <p className="text-xs text-gray-400 leading-tight">CO2 Économisé</p>
               </div>
               
               {/* Stat 2: Community */}
               <div className="flex flex-col items-center w-1/3 px-1 space-y-1">
-                <div className="p-2 bg-yellow-500/20 rounded-full"><UsersIcon /></div>
-                <p className="text-xl md:text-2xl font-bold">{impact.communityCostAvoided.toFixed(0)} €</p>
+                <p className="text-xl md:text-2xl font-bold text-yellow-400">{impact.communityCostAvoided.toFixed(0)} €</p>
                 <p className="text-xs text-gray-400 leading-tight">Coût Évité</p>
               </div>
               
               {/* Stat 3: Value */}
               <div className="flex flex-col items-center w-1/3 px-1 space-y-1">
-                <div className="p-2 bg-blue-500/20 rounded-full"><PiggyBankIcon /></div>
-                <p className="text-xl md:text-2xl font-bold">{impact.valueCreated.toFixed(0)} €</p>
+                <p className="text-xl md:text-2xl font-bold text-blue-400">{impact.valueCreated.toFixed(0)} €</p>
                 <p className="text-xs text-gray-400 leading-tight">Valeur Créée</p>
               </div>
             </div>
@@ -182,7 +179,6 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalFile, origina
             disabled={isEditing || !editPrompt}
             className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
             >
-                <SparklesIcon />
                 <span>Générer</span>
             </button>
         </div>
@@ -195,7 +191,6 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalFile, origina
           onClick={handleDownload}
           className="w-full flex-1 px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
         >
-          <DownloadIcon />
           <span>Télécharger l'image</span>
         </button>
         {navigator.share && (
@@ -204,7 +199,6 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalFile, origina
                 disabled={isSharing}
                 className="w-full flex-1 px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:bg-gray-500"
             >
-                <ShareIcon />
                 <span>{isSharing ? 'Partage...' : 'Partager'}</span>
             </button>
         )}
@@ -214,7 +208,6 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalFile, origina
           onClick={onReset}
           className="w-full px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
         >
-          <ArrowPathIcon />
           <span>Analyser un autre meuble</span>
         </button>
        </div>

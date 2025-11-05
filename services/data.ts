@@ -43,10 +43,16 @@ export const furnitureData: { [key: string]: FurnitureInfo } = {
     disposal_cost_per_kg: 1.2,
     new_price: 55,
   },
+   'particle board table': {
+    co2_new: 60,
+    weight_kg: 25,
+    disposal_cost_per_kg: 1.5,
+    new_price: 150,
+  },
+  'fabric sofa': {
+    co2_new: 250,
+    weight_kg: 80,
+    disposal_cost_per_kg: 1.2,
+    new_price: 600,
+  }
 };
-
-// Conversion factor: 1 kg CO2 is roughly equivalent to 5 km driven in an average car.
-export const CO2_KM_DRIVEN_FACTOR = 5;
-
-// Average cost of materials for upcycling
-export const UPCYCLING_COSTS = 30; // in Euros
