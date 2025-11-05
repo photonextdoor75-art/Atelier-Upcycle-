@@ -150,15 +150,15 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalImageSrc, onR
             <div className="flex justify-around items-center text-center w-full flex-grow">
                <div className="flex flex-col items-center justify-center w-1/3 px-1 space-y-1">
                  <p className="text-xl md:text-2xl font-bold text-green-400">{Math.round(impact.co2Saved)} kg</p>
-                 <p className="text-xs text-gray-400 leading-tight">CO2 Économisé</p>
+                 <p className="text-xs text-gray-400 leading-tight">quantité de CO2 non émise par rapport à l'achat d'un meuble neuf.</p>
                </div>
                <div className="flex flex-col items-center justify-center w-1/3 px-1 space-y-1">
                  <p className="text-xl md:text-2xl font-bold text-yellow-400">{impact.communityCostAvoided.toFixed(0)} €</p>
-                 <p className="text-xs text-gray-400 leading-tight">Coût Évité</p>
+                 <p className="text-xs text-gray-400 leading-tight">coûts de mise en décharge évités</p>
                </div>
                <div className="flex flex-col items-center justify-center w-1/3 px-1 space-y-1">
                  <p className={`text-xl md:text-2xl font-bold ${impact.valueCreated > 0 ? 'text-blue-400' : 'text-red-500'}`}>{impact.valueCreated.toFixed(0)} €</p>
-                 <p className="text-xs text-gray-400 leading-tight">Valeur Créée</p>
+                 <p className="text-xs text-gray-400 leading-tight">valeur du meuble neuf moins les coûts d'upcycling</p>
                </div>
             </div>
             
