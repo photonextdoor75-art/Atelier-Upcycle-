@@ -14,9 +14,11 @@ const App: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [location, setLocation] = useState<string | null>(null);
+  const [uploadTimestamp, setUploadTimestamp] = useState<number | null>(null);
 
   const handleImageUpload = (file: File) => {
     setUploadedFile(file);
+    setUploadTimestamp(Date.now()); // Capture timestamp on upload
     const reader = new FileReader();
     reader.onloadend = () => {
       setImageDataUrl(reader.result as string);
@@ -32,7 +34,7 @@ const App: React.FC = () => {
     try {
       const base64Data = imageDataUrl.split(',')[1];
       const result = await analyzeFurnitureImage(base64Data, loc);
-      setAnalysisResult(result);
+      setAnalysisResult({ ...result, uploadTimestamp }); // Add timestamp to result
       setAppState(AppState.RESULTS);
     } catch (error) {
       console.error("Analysis failed:", error);
@@ -40,7 +42,7 @@ const App: React.FC = () => {
       setErrorMessage(message);
       setAppState(AppState.ERROR);
     }
-  }, [imageDataUrl]);
+  }, [imageDataUrl, uploadTimestamp]);
 
   useEffect(() => {
     if (appState === AppState.LOADING) {
@@ -55,6 +57,7 @@ const App: React.FC = () => {
     setAnalysisResult(null);
     setErrorMessage(null);
     setLocation(null);
+    setUploadTimestamp(null);
   };
 
   const renderContent = () => {

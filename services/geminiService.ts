@@ -10,7 +10,7 @@ import { furnitureData } from './data';
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 
-function calculateImpact(furnitureIdentifier: string): ImpactData {
+function calculateImpact(furnitureIdentifier: string, condition: string): ImpactData {
   const key = furnitureIdentifier.toLowerCase();
   // Fallback to a default if the exact combination is not found
   const data = furnitureData[key] || furnitureData['wooden chair']; 
@@ -22,14 +22,20 @@ function calculateImpact(furnitureIdentifier: string): ImpactData {
 
   const communityCostAvoided = data.weight_kg * data.disposal_cost_per_kg;
   
-  // A more realistic value created calculation
-  const upcyclingCosts = data.new_price * 0.2; // Assume upcycling costs 20% of new price
+  // Upcycling costs now depend on the furniture's condition
+  const conditionMultipliers: { [key: string]: number } = {
+    'good': 0.15, // 15% of new price for items in good condition
+    'average': 0.30, // 30% for average condition
+    'poor': 0.60, // 60% for poor condition
+  };
+  const multiplier = conditionMultipliers[condition] || 0.30;
+  const upcyclingCosts = data.new_price * multiplier;
   const valueCreated = data.new_price - upcyclingCosts;
 
   return { 
     co2Saved: Math.max(0, co2Saved), 
     communityCostAvoided: Math.max(0, communityCostAvoided), 
-    valueCreated: Math.max(0, valueCreated) 
+    valueCreated: valueCreated // Can now be negative
   };
 }
 
@@ -43,11 +49,17 @@ export async function analyzeFurnitureImage(base64Data: string, location: string
   
   const furnitureIdentifiers = Object.keys(furnitureData);
   
-  let promptText = `Analyze this image of a piece of furniture. Identify the furniture from the provided list.
+  let promptText = `Analyze this image of a piece of furniture. Identify its type, assess its condition, and determine its environment.
       
       Valid furniture identifiers: ${furnitureIdentifiers.join(', ')}
+      Valid conditions: good, average, poor
+      Valid environments: indoor, outdoor
       
-      Respond ONLY with a JSON object matching the specified schema. If you cannot determine the type, use "unknown".`;
+      - "indoor": The furniture is inside a building like a house or apartment.
+      - "outdoor": The furniture is outside, on a street, sidewalk, or appears abandoned.
+      
+      Respond ONLY with a JSON object matching the specified schema. 
+      If you cannot determine a value, use a reasonable default ("unknown" for type, "average" for condition, "indoor" for environment).`;
 
 
   if (location) {
@@ -65,8 +77,10 @@ export async function analyzeFurnitureImage(base64Data: string, location: string
               type: Type.OBJECT,
               properties: {
                   furnitureType: { type: Type.STRING, enum: [...furnitureIdentifiers, "unknown"], description: "The identifier of the furniture, including material and type (e.g., 'wooden chair')." },
+                  condition: { type: Type.STRING, enum: ['good', 'average', 'poor'], description: "The physical condition of the furniture." },
+                  environment: { type: Type.STRING, enum: ['indoor', 'outdoor'], description: "Whether the furniture is indoors or outdoors." },
               },
-              required: ['furnitureType']
+              required: ['furnitureType', 'condition', 'environment']
           },
       },
   });
@@ -74,17 +88,19 @@ export async function analyzeFurnitureImage(base64Data: string, location: string
   const jsonResponseText = response.text.trim();
   const result = JSON.parse(jsonResponseText);
   
-  const { furnitureType } = result;
+  const { furnitureType, condition, environment } = result;
 
   if (furnitureType === 'unknown') {
     throw new Error("Désolé, l'IA n'a pas pu identifier le meuble. Essayez avec une autre photo.");
   }
 
-  const impact = calculateImpact(furnitureType);
+  const impact = calculateImpact(furnitureType, condition);
 
   return {
     furnitureType,
     impact,
     location: location ?? undefined,
+    condition,
+    environment,
   };
 }

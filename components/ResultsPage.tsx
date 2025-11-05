@@ -35,19 +35,21 @@ const translations: { [key: string]: string } = {
   'plastic chair': 'chaise en plastique',
   'particle board table': 'table en panneau de particules',
   'fabric sofa': 'canapé en tissu',
-  'wood': 'bois',
-  'metal': 'métal',
-  'particle board': 'panneau de particules',
-  'plastic': 'plastique',
-  'fabric': 'tissu',
+  'good': 'Bon',
+  'average': 'Moyen',
+  'poor': 'Mauvais',
+  'indoor': 'Intérieur',
+  'outdoor': 'Extérieur',
 };
 
 const translate = (term: string): string => translations[term.toLowerCase()] || term;
 
 const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalImageSrc, onReset }) => {
-  const { impact, furnitureType } = result;
+  const { impact, furnitureType, condition, environment, uploadTimestamp } = result;
   const resultCardRef = useRef<HTMLDivElement>(null);
   const [isSharing, setIsSharing] = useState(false);
+
+  const isIndoors = environment === 'indoor';
 
   const handleDownload = useCallback(() => {
     if (resultCardRef.current === null) {
@@ -100,6 +102,19 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalImageSrc, onR
   const imageToDisplay = originalImageSrc;
   const translatedFurnitureDescription = translate(furnitureType);
 
+  const stampText = isIndoors ? "VALORISÉ" : "PERDU";
+  const stampColorClasses = isIndoors ? "border-yellow-400 text-yellow-400" : "border-red-500 text-red-500";
+  
+  const formattedTimestamp = uploadTimestamp 
+    ? new Date(uploadTimestamp).toLocaleString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).replace(',', ' à')
+    : null;
+
   return (
     <div className="w-full flex flex-col items-center space-y-6">
       {/* The downloadable card with 4:5 aspect ratio */}
@@ -109,16 +124,23 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalImageSrc, onR
           <div className="relative w-full h-3/5 bg-gray-700">
              <img src={imageToDisplay} alt="Furniture" className="w-full h-full object-cover" />
              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 -rotate-12">
-                <div className="border-4 border-yellow-400 text-yellow-400 font-black uppercase px-4 py-1 text-4xl md:px-6 md:py-2 md:text-5xl tracking-widest" style={{fontFamily: "'Arial Black', Gadget, sans-serif"}}>
-                    VALORISÉ
+                <div className={`border-4 ${stampColorClasses} font-black uppercase px-4 py-1 text-4xl md:px-6 md:py-2 md:text-5xl tracking-widest`} style={{fontFamily: "'Arial Black', Gadget, sans-serif"}}>
+                    {stampText}
                 </div>
              </div>
              {/* Watermark Title */}
-             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                <h2 className="text-lg md:text-xl font-bold leading-tight text-center text-white text-shadow-lg">
-                    Votre <span className="text-green-400">{translatedFurnitureDescription}</span> a un potentiel incroyable
-                    {result.location && <span className="text-base font-medium text-gray-300 block mt-1">à {result.location}</span>} !
-                </h2>
+             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 text-center">
+                {isIndoors ? (
+                    <h2 className="text-lg md:text-xl font-bold leading-tight text-white text-shadow-lg">
+                        Votre <span className="text-green-400">{translatedFurnitureDescription}</span> a un potentiel incroyable !
+                    </h2>
+                ) : (
+                    <h2 className="text-lg md:text-xl font-bold leading-tight text-white text-shadow-lg">
+                        Ce <span className="text-yellow-400">{translatedFurnitureDescription}</span> trouvé dehors a un potentiel incroyable !
+                    </h2>
+                )}
+                {condition && <p className="text-sm text-gray-300 mt-1">État: {translate(condition)} | Lieu: {environment ? translate(environment) : 'N/A'}</p>}
+                {formattedTimestamp && <p className="text-xs text-gray-400 mt-1">Vu le {formattedTimestamp}</p>}
              </div>
           </div>
 
@@ -135,7 +157,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalImageSrc, onR
                  <p className="text-xs text-gray-400 leading-tight">Coût Évité</p>
                </div>
                <div className="flex flex-col items-center justify-center w-1/3 px-1 space-y-1">
-                 <p className="text-xl md:text-2xl font-bold text-blue-400">{impact.valueCreated.toFixed(0)} €</p>
+                 <p className={`text-xl md:text-2xl font-bold ${impact.valueCreated > 0 ? 'text-blue-400' : 'text-red-500'}`}>{impact.valueCreated.toFixed(0)} €</p>
                  <p className="text-xs text-gray-400 leading-tight">Valeur Créée</p>
                </div>
             </div>

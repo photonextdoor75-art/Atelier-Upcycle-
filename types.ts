@@ -23,4 +23,7 @@ export interface AnalysisResult {
   furnitureType: string;
   impact: ImpactData;
   location?: string;
+  condition?: string;
+  environment?: 'indoor' | 'outdoor';
+  uploadTimestamp?: number;
 }
