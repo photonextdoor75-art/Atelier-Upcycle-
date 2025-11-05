@@ -27,5 +27,7 @@ export interface AnalysisResult {
   environment?: 'indoor' | 'outdoor';
   uploadTimestamp?: number;
   streetAddress?: string;
+  postalCode?: string;
+  city?: string;
   coordinates?: { lat: number; lon: number };
 }

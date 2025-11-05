@@ -58,10 +58,10 @@ export async function analyzeFurnitureImage(base64Data: string, location: string
       - "indoor": The furniture is inside a building like a house or apartment.
       - "outdoor": The furniture is outside, on a street, sidewalk, or appears abandoned.
 
-      If coordinates are provided, act as a reverse geocoding service and determine the most likely street address (number and name).
+      If coordinates are provided, act as a reverse geocoding service and determine the most likely street address (number and name), postal code, and city.
       
       Respond ONLY with a JSON object matching the specified schema. 
-      If you cannot determine a value, use a reasonable default ("unknown" for type, "average" for condition, "indoor" for environment, "" for streetAddress).`;
+      If you cannot determine a value, use an empty string for text fields.`;
 
 
   if (location) {
@@ -85,9 +85,11 @@ export async function analyzeFurnitureImage(base64Data: string, location: string
                   furnitureType: { type: Type.STRING, enum: [...furnitureIdentifiers, "unknown"], description: "The identifier of the furniture, including material and type (e.g., 'wooden chair')." },
                   condition: { type: Type.STRING, enum: ['good', 'average', 'poor'], description: "The physical condition of the furniture." },
                   environment: { type: Type.STRING, enum: ['indoor', 'outdoor'], description: "Whether the furniture is indoors or outdoors." },
-                  streetAddress: { type: Type.STRING, description: "The reverse-geocoded street address, or an empty string if not determinable." },
+                  streetAddress: { type: Type.STRING, description: "The reverse-geocoded street address (number and name), or an empty string." },
+                  postalCode: { type: Type.STRING, description: "The postal code for the address, or an empty string." },
+                  city: { type: Type.STRING, description: "The city for the address, or an empty string." },
               },
-              required: ['furnitureType', 'condition', 'environment', 'streetAddress']
+              required: ['furnitureType', 'condition', 'environment', 'streetAddress', 'postalCode', 'city']
           },
       },
   });
@@ -95,7 +97,7 @@ export async function analyzeFurnitureImage(base64Data: string, location: string
   const jsonResponseText = response.text.trim();
   const result = JSON.parse(jsonResponseText);
   
-  const { furnitureType, condition, environment, streetAddress } = result;
+  const { furnitureType, condition, environment, streetAddress, postalCode, city } = result;
 
   if (furnitureType === 'unknown') {
     throw new Error("Désolé, l'IA n'a pas pu identifier le meuble. Essayez avec une autre photo.");
@@ -110,5 +112,7 @@ export async function analyzeFurnitureImage(base64Data: string, location: string
     condition,
     environment,
     streetAddress: streetAddress || undefined,
+    postalCode: postalCode || undefined,
+    city: city || undefined,
   };
 }

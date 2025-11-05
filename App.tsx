@@ -82,12 +82,12 @@ const App: React.FC = () => {
         return null;
       case AppState.ERROR:
         return (
-          <div className="text-center text-red-400 p-4 bg-red-900/20 rounded-lg">
-            <p className="font-semibold">Une erreur est survenue :</p>
-            <p>{errorMessage}</p>
+           <div className="text-center text-red-800 p-6 bg-white/50 backdrop-blur-lg border border-red-200 rounded-2xl shadow-lg">
+            <p className="font-semibold text-lg">Une erreur est survenue :</p>
+            <p className="mt-2">{errorMessage}</p>
             <button
               onClick={handleReset}
-              className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              className="mt-6 px-6 py-2 bg-orange-500 text-white font-semibold rounded-full hover:bg-orange-600 transition-colors"
             >
               Recommencer
             </button>
@@ -100,7 +100,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 font-sans flex flex-col items-center p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen w-full bg-gradient-to-br from-purple-100 via-blue-100 to-orange-100 text-slate-800 font-sans flex flex-col items-center p-4 sm:p-6 lg:p-8">
       <Header />
       <main className="w-full max-w-7xl flex-grow flex flex-col items-center justify-center">
         {renderContent()}
