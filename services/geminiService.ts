@@ -1,26 +1,17 @@
+// FIX: Refactored to initialize GoogleGenAI client once at the module level and removed the explicit API key check, adhering to coding guidelines.
 import { GoogleGenAI, Type } from '@google/genai';
 import { AnalysisResult, ImpactData } from '../types';
 import { furnitureData } from './data';
 
 /**
- * Creates and returns a GoogleGenAI client instance.
- * Throws an error if the API key is not configured.
- * This function is called on-demand to ensure the environment variable is loaded.
+ * Per coding guidelines, the API key is assumed to be available in process.env.API_KEY.
+ * The client is initialized once and reused.
  */
-const getAiClient = (): GoogleGenAI => {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) {
-        throw new Error("La clé API n'est pas configurée. Veuillez l'ajouter dans les secrets (variables d'environnement) de votre projet et redéployer.");
-    }
-    return new GoogleGenAI({ apiKey });
-};
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 
-const furnitureTypes = Object.keys(furnitureData);
-const materials = ['wood', 'metal', 'particle board', 'plastic', 'fabric'];
-
-function calculateImpact(type: string, material: string): ImpactData {
-  const key = `${material} ${type}`.toLowerCase();
+function calculateImpact(furnitureIdentifier: string): ImpactData {
+  const key = furnitureIdentifier.toLowerCase();
   // Fallback to a default if the exact combination is not found
   const data = furnitureData[key] || furnitureData['wooden chair']; 
 
@@ -43,8 +34,6 @@ function calculateImpact(type: string, material: string): ImpactData {
 }
 
 export async function analyzeFurnitureImage(base64Data: string, location: string | null): Promise<AnalysisResult> {
-  const ai = getAiClient(); // Initialize client just in time
-
   const imagePart = {
     inlineData: {
       mimeType: 'image/jpeg',
@@ -52,12 +41,14 @@ export async function analyzeFurnitureImage(base64Data: string, location: string
     },
   };
   
-  let promptText = `Analyze this image of a piece of furniture. Identify the main furniture type and its primary material from the provided lists.
+  const furnitureIdentifiers = Object.keys(furnitureData);
+  
+  let promptText = `Analyze this image of a piece of furniture. Identify the furniture from the provided list.
       
-      Valid furniture types: ${furnitureTypes.join(', ')}
-      Valid materials: ${materials.join(', ')}
+      Valid furniture identifiers: ${furnitureIdentifiers.join(', ')}
       
-      Respond ONLY with a JSON object matching the specified schema. If you cannot determine the type or material, use "unknown".`;
+      Respond ONLY with a JSON object matching the specified schema. If you cannot determine the type, use "unknown".`;
+
 
   if (location) {
       promptText += `\n\nThe user's location is: ${location}.`;
@@ -73,10 +64,9 @@ export async function analyzeFurnitureImage(base64Data: string, location: string
           responseSchema: {
               type: Type.OBJECT,
               properties: {
-                  furnitureType: { type: Type.STRING, enum: [...furnitureTypes, "unknown"], description: "The type of furniture." },
-                  furnitureMaterial: { type: Type.STRING, enum: [...materials, "unknown"], description: "The primary material of the furniture." },
+                  furnitureType: { type: Type.STRING, enum: [...furnitureIdentifiers, "unknown"], description: "The identifier of the furniture, including material and type (e.g., 'wooden chair')." },
               },
-              required: ['furnitureType', 'furnitureMaterial']
+              required: ['furnitureType']
           },
       },
   });
@@ -84,17 +74,16 @@ export async function analyzeFurnitureImage(base64Data: string, location: string
   const jsonResponseText = response.text.trim();
   const result = JSON.parse(jsonResponseText);
   
-  const { furnitureType, furnitureMaterial } = result;
+  const { furnitureType } = result;
 
-  if (furnitureType === 'unknown' || furnitureMaterial === 'unknown') {
-    throw new Error("Désolé, l'IA n'a pas pu identifier le type ou le matériau du meuble. Essayez avec une autre photo.");
+  if (furnitureType === 'unknown') {
+    throw new Error("Désolé, l'IA n'a pas pu identifier le meuble. Essayez avec une autre photo.");
   }
 
-  const impact = calculateImpact(furnitureType, furnitureMaterial);
+  const impact = calculateImpact(furnitureType);
 
   return {
     furnitureType,
-    furnitureMaterial,
     impact,
     location: location ?? undefined,
   };

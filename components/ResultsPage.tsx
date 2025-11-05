@@ -44,14 +44,6 @@ const translations: { [key: string]: string } = {
 
 const translate = (term: string): string => translations[term.toLowerCase()] || term;
 
-const StatItem: React.FC<{ value: string; label: string; colorClass: string; }> = ({ value, label, colorClass }) => (
-    <div className="flex flex-col items-center justify-center w-1/3 px-1 space-y-1 h-full">
-        <p className={`text-xl md:text-2xl font-bold ${colorClass}`}>{value}</p>
-        <p className="text-xs text-gray-400 leading-tight">{label}</p>
-    </div>
-);
-
-
 const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalImageSrc, onReset }) => {
   const { impact, furnitureType } = result;
   const resultCardRef = useRef<HTMLDivElement>(null);
@@ -114,7 +106,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalImageSrc, onR
       <div className="w-full max-w-md">
         <div ref={resultCardRef} className="w-full bg-gray-800 rounded-2xl shadow-2xl overflow-hidden aspect-[4/5] flex flex-col">
           {/* Image Part */}
-          <div className="relative w-full flex-grow bg-gray-700">
+          <div className="relative w-full h-3/5 bg-gray-700">
              <img src={imageToDisplay} alt="Furniture" className="w-full h-full object-cover" />
              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 -rotate-12">
                 <div className="border-4 border-yellow-400 text-yellow-400 font-black uppercase px-4 py-1 text-4xl md:px-6 md:py-2 md:text-5xl tracking-widest" style={{fontFamily: "'Arial Black', Gadget, sans-serif"}}>
@@ -134,9 +126,18 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalImageSrc, onR
           <div className="h-2/5 flex-shrink-0 flex flex-col justify-center items-center p-4 text-white space-y-3">
             {/* Stats */}
             <div className="flex justify-around items-center text-center w-full flex-grow">
-              <StatItem value={`${Math.round(impact.co2Saved)} kg`} label="CO2 Économisé" colorClass="text-green-400" />
-              <StatItem value={`${impact.communityCostAvoided.toFixed(0)} €`} label="Coût Évité" colorClass="text-yellow-400" />
-              <StatItem value={`${impact.valueCreated.toFixed(0)} €`} label="Valeur Créée" colorClass="text-blue-400" />
+               <div className="flex flex-col items-center justify-center w-1/3 px-1 space-y-1">
+                 <p className="text-xl md:text-2xl font-bold text-green-400">{Math.round(impact.co2Saved)} kg</p>
+                 <p className="text-xs text-gray-400 leading-tight">CO2 Économisé</p>
+               </div>
+               <div className="flex flex-col items-center justify-center w-1/3 px-1 space-y-1">
+                 <p className="text-xl md:text-2xl font-bold text-yellow-400">{impact.communityCostAvoided.toFixed(0)} €</p>
+                 <p className="text-xs text-gray-400 leading-tight">Coût Évité</p>
+               </div>
+               <div className="flex flex-col items-center justify-center w-1/3 px-1 space-y-1">
+                 <p className="text-xl md:text-2xl font-bold text-blue-400">{impact.valueCreated.toFixed(0)} €</p>
+                 <p className="text-xs text-gray-400 leading-tight">Valeur Créée</p>
+               </div>
             </div>
             
             {/* Divider */}

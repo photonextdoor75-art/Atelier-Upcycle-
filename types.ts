@@ -1,4 +1,4 @@
-
+// FIX: Removed self-import of AppState which caused a circular dependency and compilation errors.
 export enum AppState {
   LANDING,
   LOADING,
@@ -21,7 +21,6 @@ export interface ImpactData {
 
 export interface AnalysisResult {
   furnitureType: string;
-  furnitureMaterial: string;
   impact: ImpactData;
   location?: string;
 }
