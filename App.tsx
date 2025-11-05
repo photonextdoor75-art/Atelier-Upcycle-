@@ -14,6 +14,7 @@ const App: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [location, setLocation] = useState<string | null>(null);
+  const [coordinates, setCoordinates] = useState<{ lat: number; lon: number } | null>(null);
   const [uploadTimestamp, setUploadTimestamp] = useState<number | null>(null);
 
   const handleImageUpload = (file: File) => {
@@ -28,13 +29,13 @@ const App: React.FC = () => {
     setErrorMessage(null);
   };
 
-  const runAnalysis = useCallback(async (loc: string | null) => {
+  const runAnalysis = useCallback(async (loc: string | null, coords: { lat: number; lon: number } | null) => {
     if (!imageDataUrl) return;
 
     try {
       const base64Data = imageDataUrl.split(',')[1];
-      const result = await analyzeFurnitureImage(base64Data, loc);
-      setAnalysisResult({ ...result, uploadTimestamp }); // Add timestamp to result
+      const result = await analyzeFurnitureImage(base64Data, loc, coords);
+      setAnalysisResult({ ...result, uploadTimestamp, coordinates: coords ?? undefined }); // Add timestamp and coords to result
       setAppState(AppState.RESULTS);
     } catch (error) {
       console.error("Analysis failed:", error);
@@ -46,9 +47,9 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (appState === AppState.LOADING) {
-      runAnalysis(location);
+      runAnalysis(location, coordinates);
     }
-  }, [appState, runAnalysis, location]);
+  }, [appState, runAnalysis, location, coordinates]);
 
   const handleReset = () => {
     setAppState(AppState.LANDING);
@@ -57,6 +58,7 @@ const App: React.FC = () => {
     setAnalysisResult(null);
     setErrorMessage(null);
     setLocation(null);
+    setCoordinates(null);
     setUploadTimestamp(null);
   };
 
@@ -93,7 +95,7 @@ const App: React.FC = () => {
         );
       case AppState.LANDING:
       default:
-        return <LandingPage onImageUpload={handleImageUpload} isLoading={false} location={location} setLocation={setLocation} />;
+        return <LandingPage onImageUpload={handleImageUpload} isLoading={false} location={location} setLocation={setLocation} setCoordinates={setCoordinates} />;
     }
   };
 

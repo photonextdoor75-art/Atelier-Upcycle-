@@ -5,9 +5,10 @@ interface LandingPageProps {
   isLoading: boolean;
   location: string | null;
   setLocation: (location: string) => void;
+  setCoordinates: (coords: { lat: number; lon: number }) => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onImageUpload, isLoading, location, setLocation }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onImageUpload, isLoading, location, setLocation, setCoordinates }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [manualLocation, setManualLocation] = useState('');
   const [isLocating, setIsLocating] = useState(false);
@@ -46,8 +47,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onImageUpload, isLoading, loc
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        // For simplicity, we'll just use a user-friendly string. 
-        // An actual app might use a reverse geocoding API.
+        setCoordinates({ lat: latitude, lon: longitude });
         setLocation(`Votre position actuelle (${latitude.toFixed(2)}, ${longitude.toFixed(2)})`);
         setIsLocating(false);
       },

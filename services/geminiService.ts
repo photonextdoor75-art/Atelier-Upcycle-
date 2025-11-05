@@ -39,7 +39,7 @@ function calculateImpact(furnitureIdentifier: string, condition: string): Impact
   };
 }
 
-export async function analyzeFurnitureImage(base64Data: string, location: string | null): Promise<AnalysisResult> {
+export async function analyzeFurnitureImage(base64Data: string, location: string | null, coordinates: {lat: number, lon: number} | null): Promise<AnalysisResult> {
   const imagePart = {
     inlineData: {
       mimeType: 'image/jpeg',
@@ -57,14 +57,20 @@ export async function analyzeFurnitureImage(base64Data: string, location: string
       
       - "indoor": The furniture is inside a building like a house or apartment.
       - "outdoor": The furniture is outside, on a street, sidewalk, or appears abandoned.
+
+      If coordinates are provided, act as a reverse geocoding service and determine the most likely street address (number and name).
       
       Respond ONLY with a JSON object matching the specified schema. 
-      If you cannot determine a value, use a reasonable default ("unknown" for type, "average" for condition, "indoor" for environment).`;
+      If you cannot determine a value, use a reasonable default ("unknown" for type, "average" for condition, "indoor" for environment, "" for streetAddress).`;
 
 
   if (location) {
       promptText += `\n\nThe user's location is: ${location}.`;
   }
+  if (coordinates) {
+    promptText += `\n\nThe exact coordinates are: latitude=${coordinates.lat}, longitude=${coordinates.lon}.`;
+  }
+
 
   const textPart = { text: promptText };
 
@@ -79,8 +85,9 @@ export async function analyzeFurnitureImage(base64Data: string, location: string
                   furnitureType: { type: Type.STRING, enum: [...furnitureIdentifiers, "unknown"], description: "The identifier of the furniture, including material and type (e.g., 'wooden chair')." },
                   condition: { type: Type.STRING, enum: ['good', 'average', 'poor'], description: "The physical condition of the furniture." },
                   environment: { type: Type.STRING, enum: ['indoor', 'outdoor'], description: "Whether the furniture is indoors or outdoors." },
+                  streetAddress: { type: Type.STRING, description: "The reverse-geocoded street address, or an empty string if not determinable." },
               },
-              required: ['furnitureType', 'condition', 'environment']
+              required: ['furnitureType', 'condition', 'environment', 'streetAddress']
           },
       },
   });
@@ -88,7 +95,7 @@ export async function analyzeFurnitureImage(base64Data: string, location: string
   const jsonResponseText = response.text.trim();
   const result = JSON.parse(jsonResponseText);
   
-  const { furnitureType, condition, environment } = result;
+  const { furnitureType, condition, environment, streetAddress } = result;
 
   if (furnitureType === 'unknown') {
     throw new Error("Désolé, l'IA n'a pas pu identifier le meuble. Essayez avec une autre photo.");
@@ -102,5 +109,6 @@ export async function analyzeFurnitureImage(base64Data: string, location: string
     location: location ?? undefined,
     condition,
     environment,
+    streetAddress: streetAddress || undefined,
   };
 }

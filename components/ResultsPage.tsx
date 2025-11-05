@@ -1,7 +1,7 @@
 import React, { useRef, useState, useCallback } from 'react';
 import { toPng } from 'html-to-image';
 import { AnalysisResult } from '../types';
-import { ArrowPathIcon, DownloadIcon, ShareIcon } from './Icons';
+import { ArrowPathIcon, DownloadIcon, ShareIcon, MapPinIcon } from './Icons';
 
 interface ResultsPageProps {
   result: AnalysisResult;
@@ -45,7 +45,7 @@ const translations: { [key: string]: string } = {
 const translate = (term: string): string => translations[term.toLowerCase()] || term;
 
 const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalImageSrc, onReset }) => {
-  const { impact, furnitureType, condition, environment, uploadTimestamp } = result;
+  const { impact, furnitureType, condition, environment, uploadTimestamp, streetAddress, coordinates } = result;
   const resultCardRef = useRef<HTMLDivElement>(null);
   const [isSharing, setIsSharing] = useState(false);
 
@@ -115,6 +115,18 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalImageSrc, onR
       }).replace(',', ' à')
     : null;
 
+  const locationDisplay = streetAddress ? (
+    <div className="flex items-center justify-center gap-1 text-xs text-gray-300 mt-1">
+        <MapPinIcon className="w-3 h-3" />
+        <span>{streetAddress}</span>
+    </div>
+  ) : coordinates ? (
+    <div className="flex items-center justify-center gap-1 text-xs text-gray-300 mt-1">
+        <MapPinIcon className="w-3 h-3" />
+        <span>{coordinates.lat.toFixed(4)}, {coordinates.lon.toFixed(4)}</span>
+    </div>
+  ) : null;
+
   return (
     <div className="w-full flex flex-col items-center space-y-6">
       {/* The downloadable card with 4:5 aspect ratio */}
@@ -139,7 +151,8 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ result, originalImageSrc, onR
                         Ce <span className="text-yellow-400">{translatedFurnitureDescription}</span> trouvé dehors a un potentiel incroyable !
                     </h2>
                 )}
-                {condition && <p className="text-sm text-gray-300 mt-1">État: {translate(condition)} | Lieu: {environment ? translate(environment) : 'N/A'}</p>}
+                {condition && <p className="text-sm text-gray-300 mt-1">État: {translate(condition)}</p>}
+                {locationDisplay}
                 {formattedTimestamp && <p className="text-xs text-gray-400 mt-1">Vu le {formattedTimestamp}</p>}
              </div>
           </div>
