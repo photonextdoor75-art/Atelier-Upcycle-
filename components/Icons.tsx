@@ -4,13 +4,13 @@ const iconClass = "h-6 w-6 text-white";
 
 export const LeafIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h1a2 2 0 002-2v-1a2 2 0 012-2h1.945M7.757 14.757a3 3 0 01-4.243-4.243 3 3 0 014.243 4.243zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
 );
 
 export const PiggyBankIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01M12 6v-1h4v1h-4zm-2 10v-1h4v1h-4zm-2 2h8a2 2 0 002-2V9a2 2 0 00-2-2h-2.586a1 1 0 01-.707-.293l-1.414-1.414A1 1 0 009.586 5H8a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 15.536A9.004 9.004 0 0112 16c-2.435 0-4.66-1.053-6.175-2.75m12.35-5.5A9.006 9.006 0 0012 8c-2.435 0-4.66 1.053-6.175 2.75m12.35-5.5a9 9 0 10-12.35 5.5" />
     </svg>
 );
 
